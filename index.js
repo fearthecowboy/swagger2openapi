@@ -293,7 +293,7 @@ function fixParamRef(param, options) {
 /**
  * @returns requestBody
  */
-function processParameter(param, op, path, index, openapi, options) {
+function processParameter(param, op, path, index, openapi, options, paramIndex) {
     var result = {};
     var singularRequestBody = true;
 
@@ -524,6 +524,15 @@ function processParameter(param, op, path, index, openapi, options) {
             }
             else {
                 op.requestBody = Object.assign({}, op.requestBody); // make sure we have one
+
+                // copy over extensions
+                for (const xKey of Object.keys(param).filter(k => k.startsWith("x-") && !k.startsWith("x-s2o-")))
+                    op.requestBody[xKey] = param[xKey];
+
+                // preserve information required for code generation
+                op.requestBody["x-ms-client-name"] = op.requestBody["x-ms-client-name"] || param.name;
+                op.requestBody["x-ms-requestBody-index"] = paramIndex;
+
                 if ((op.requestBody.content && op.requestBody.content["multipart/form-data"])
                     && (result.content["multipart/form-data"])) {
                     op.requestBody.content["multipart/form-data"].schema.properties =
@@ -679,6 +688,7 @@ function processPaths(container, containerName, options, requestBodyCache, opena
                 }
 
                 if (op.parameters && Array.isArray(op.parameters)) {
+                    let paramIndex = 0;
                     if (path.parameters) {
                         for (let param of path.parameters) {
                             if (typeof param.$ref === 'string') {
@@ -690,12 +700,12 @@ function processPaths(container, containerName, options, requestBodyCache, opena
                             });
 
                             if (!match && (param.in === 'formData') || (param.in === 'body') || (param.type === 'file')) {
-                                processParameter(param, op, path, p, openapi, options);
+                                processParameter(param, op, path, p, openapi, options, paramIndex++);
                             }
                         }
                     }
                     for (let param of op.parameters) {
-                        processParameter(param, op, path, method + ':' + p, openapi, options);
+                        processParameter(param, op, path, method + ':' + p, openapi, options, paramIndex++);
                     }
                     if (!options.debug) {
                         op.parameters = op.parameters.filter(deleteParameters);
