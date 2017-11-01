@@ -531,7 +531,7 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
 
                 // preserve information required for code generation
                 op.requestBody["x-ms-client-name"] = op.requestBody["x-ms-client-name"] || param.name;
-                op.requestBody["x-ms-requestBody-index"] = paramIndex;
+                op["x-ms-requestBody-index"] = paramIndex;
 
                 if ((op.requestBody.content && op.requestBody.content["multipart/form-data"])
                     && (result.content["multipart/form-data"])) {
