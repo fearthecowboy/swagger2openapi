@@ -480,7 +480,7 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
             }
         }
     }
-    if (param.type == 'file') {
+    else if (param.type == 'file') {
         // convert to requestBody
         if (param.required) result.required = param.required;
         result.content = {};
@@ -538,6 +538,8 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
                     && (result.content["multipart/form-data"])) {
                     op.requestBody.content["multipart/form-data"].schema.properties =
                         Object.assign(op.requestBody.content["multipart/form-data"].schema.properties, result.content["multipart/form-data"].schema.properties);
+                    const required = [...op.requestBody.content["multipart/form-data"].schema.required, ...result.content["multipart/form-data"].schema.required];
+                    if (required) op.requestBody.content["multipart/form-data"].schema.required = required;
                 }
                 else if ((op.requestBody.content && op.requestBody.content["application/x-www-form-urlencoded"])
                     && (result.content["application/x-www-form-urlencoded"])) {
@@ -1150,7 +1152,7 @@ function convertObj(swagger, options, callback) {
             for (let msp in xMsPHost.parameters) {
                 let param = xMsPHost.parameters[msp];
                 if (param.$ref) {
-                    param = Object.assign({}, common.resolveInternal(openapi, param.$ref));
+                    continue;
                 }
                 if (!msp.startsWith('x-')) {
                     delete param.required; // all true
