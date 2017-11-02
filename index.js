@@ -393,7 +393,7 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
                 param.explode = true;
             }
             if (param.collectionFormat == 'tsv') {
-                param.style = 'x-tabDelimited';
+                param.style = 'tabDelimited'; // FAKE
                 // throwOrWarn('collectionFormat:tsv is no longer supported', param, options); // not lossless
             }
             delete param.collectionFormat;
@@ -1144,8 +1144,8 @@ function convertObj(swagger, options, callback) {
 
         // TODO APIMatic extensions (x-server-configuration) ?
 
-        if (swagger['x-ms-parameterized-host']) {
-            let xMsPHost = swagger['x-ms-parameterized-host'];
+        if (openapi['x-ms-parameterized-host']) {
+            let xMsPHost = openapi['x-ms-parameterized-host'];
             let server = {};
             server.url = xMsPHost.hostTemplate;
             server.variables = {};
@@ -1154,24 +1154,26 @@ function convertObj(swagger, options, callback) {
                 if (param.$ref) {
                     continue;
                 }
+                param.schema = Object.assign({}, param, param.schema); // temporary, until modeler consumes "servers" correctly
+                delete param.schema.required;
                 if (!msp.startsWith('x-')) {
-                    delete param.required; // all true
-                    delete param.type; // all strings
-                    delete param.in; // all 'host'
-                    if (typeof param.default === 'undefined') {
-                        if (param.enum) {
-                            param.default = param.enum[0];
-                        }
-                        else {
-                            param.default = '';
-                        }
-                    }
-                    server.variables[param.name] = param;
-                    delete param.name;
+                    // delete param.required; // all true
+                    // delete param.type; // all strings
+                    // delete param.in; // all 'host'
+                    // if (typeof param.default === 'undefined') {
+                    //     if (param.enum) {
+                    //         param.default = param.enum[0];
+                    //     }
+                    //     else {
+                    //         param.default = '';
+                    //     }
+                    // }
+                    // server.variables[param.name] = param;
+                    // delete param.name;
                 }
             }
             openapi.servers.push(server);
-            delete openapi['x-ms-parameterized-host'];
+            // delete openapi['x-ms-parameterized-host'];
         }
 
         fixInfo(openapi, options, reject);
