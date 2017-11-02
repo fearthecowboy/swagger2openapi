@@ -393,7 +393,8 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
                 param.explode = true;
             }
             if (param.collectionFormat == 'tsv') {
-                throwOrWarn('collectionFormat:tsv is no longer supported', param, options); // not lossless
+                param.style = 'x-tabDelimited';
+                // throwOrWarn('collectionFormat:tsv is no longer supported', param, options); // not lossless
             }
             delete param.collectionFormat;
         }
