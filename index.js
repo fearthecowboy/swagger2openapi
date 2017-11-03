@@ -531,14 +531,14 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
                     op.requestBody[xKey] = param[xKey];
 
                 // preserve information required for code generation
-                op.requestBody["x-ms-client-name"] = op.requestBody["x-ms-client-name"] || param.name;
+                op.requestBody["x-ms-requestBody-name"] = op.requestBody["x-ms-client-name"] || param.name;
                 op["x-ms-requestBody-index"] = paramIndex;
 
                 if ((op.requestBody.content && op.requestBody.content["multipart/form-data"])
                     && (result.content["multipart/form-data"])) {
                     op.requestBody.content["multipart/form-data"].schema.properties =
                         Object.assign(op.requestBody.content["multipart/form-data"].schema.properties, result.content["multipart/form-data"].schema.properties);
-                    const required = [...op.requestBody.content["multipart/form-data"].schema.required, ...result.content["multipart/form-data"].schema.required];
+                    const required = [...op.requestBody.content["multipart/form-data"].schema.required || [], ...result.content["multipart/form-data"].schema.required || []];
                     if (required) op.requestBody.content["multipart/form-data"].schema.required = required;
                 }
                 else if ((op.requestBody.content && op.requestBody.content["application/x-www-form-urlencoded"])
@@ -1120,8 +1120,8 @@ function convertObj(swagger, options, callback) {
         openapi = Object.assign(openapi, common.clone(swagger));
         delete openapi.swagger;
 
-        if (swagger.host && swagger.schemes) {
-            for (let s of swagger.schemes) {
+        if (swagger.host) {
+            for (let s of (swagger.schemes || ["http"])) {
                 let server = {};
                 server.url = s + '://' + swagger.host + (swagger.basePath ? swagger.basePath : '/');
                 extractServerParameters(server);
@@ -1147,7 +1147,8 @@ function convertObj(swagger, options, callback) {
         if (openapi['x-ms-parameterized-host']) {
             let xMsPHost = openapi['x-ms-parameterized-host'];
             let server = {};
-            server.url = xMsPHost.hostTemplate;
+            const scheme = xMsPHost.useSchemePrefix === false ? "" : ((swagger.schemes || ["http"]).map(s => s + "://")[0] || "");
+            xMsPHost.hostTemplate = server.url = scheme + xMsPHost.hostTemplate + (swagger.basePath || "");
             server.variables = {};
             for (let msp in xMsPHost.parameters) {
                 let param = xMsPHost.parameters[msp];
@@ -1172,7 +1173,7 @@ function convertObj(swagger, options, callback) {
                     // delete param.name;
                 }
             }
-            openapi.servers.push(server);
+            openapi.servers = [server];
             // delete openapi['x-ms-parameterized-host'];
         }
 
