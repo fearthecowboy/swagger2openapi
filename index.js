@@ -1148,33 +1148,36 @@ function convertObj(swagger, options, callback) {
             let xMsPHost = openapi['x-ms-parameterized-host'];
             let server = {};
             const scheme = xMsPHost.useSchemePrefix === false ? "" : ((swagger.schemes || ["http"]).map(s => s + "://")[0] || "");
-            xMsPHost.hostTemplate = server.url = scheme + xMsPHost.hostTemplate + (swagger.basePath || "");
+            server.url = scheme + xMsPHost.hostTemplate + (swagger.basePath || "");
+            if (xMsPHost.positionInOperation)
+                server['x-ms-parameterized-host'] = { positionInOperation: xMsPHost.positionInOperation };
             server.variables = {};
             for (let msp in xMsPHost.parameters) {
-                let param = xMsPHost.parameters[msp];
-                if (param.$ref) {
-                    continue;
-                }
-                param.schema = Object.assign({}, param, param.schema); // temporary, until modeler consumes "servers" correctly
-                delete param.schema.required;
                 if (!msp.startsWith('x-')) {
-                    // delete param.required; // all true
-                    // delete param.type; // all strings
-                    // delete param.in; // all 'host'
-                    // if (typeof param.default === 'undefined') {
-                    //     if (param.enum) {
-                    //         param.default = param.enum[0];
-                    //     }
-                    //     else {
-                    //         param.default = '';
-                    //     }
-                    // }
-                    // server.variables[param.name] = param;
-                    // delete param.name;
+                    let param = xMsPHost.parameters[msp];
+                    param = param.$ref
+                        ? openapi.parameters[param.$ref.split('/').reverse()[0]]
+                        : param;
+                    param = JSON.parse(JSON.stringify(param));
+
+                    delete param.required; // all true
+                    delete param.type; // all strings
+                    delete param.in; // all 'host'
+                    if (typeof param.default === 'undefined') {
+                        if (param.enum) {
+                            param.default = param.enum[0];
+                        }
+                        else {
+                            param.default = '';
+                        }
+                    }
+
+                    server.variables[param.name] = param;
+                    delete param.name;
                 }
             }
             openapi.servers = [server];
-            // delete openapi['x-ms-parameterized-host'];
+            delete openapi['x-ms-parameterized-host'];
         }
 
         fixInfo(openapi, options, reject);
