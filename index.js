@@ -378,7 +378,8 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
                     param.style = 'spaceDelimited';
                 }
                 else {
-                    throwOrWarn('collectionFormat:ssv is no longer supported except for in:query parameters', param, options); // not lossless
+                    param.style = 'spaceDelimited';
+                    // throwOrWarn('collectionFormat:ssv is no longer supported except for in:query parameters', param, options); // not lossless
                 }
             }
             if (param.collectionFormat == 'pipes') {
@@ -386,7 +387,8 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
                     param.style = 'pipeDelimited';
                 }
                 else {
-                    throwOrWarn('collectionFormat:pipes is no longer supported except for in:query parameters', param, options); // not lossless
+                    param.style = 'pipeDelimited';
+                    // throwOrWarn('collectionFormat:pipes is no longer supported except for in:query parameters', param, options); // not lossless
                 }
             }
             if (param.collectionFormat == 'multi') {
@@ -464,6 +466,7 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
             let target = result.content[contentType].schema.properties[param.name];
             if (param.description) target.description = param.description;
             if (param.type) target.type = param.type;
+            if (param.style) target.style = param.style; // backwards compat with 2.0
 
             for (let prop of common.parameterTypeProperties) {
                 if (typeof param[prop] !== 'undefined') target[prop] = param[prop];
