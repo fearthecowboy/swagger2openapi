@@ -548,6 +548,8 @@ function processParameter(param, op, path, index, openapi, options, paramIndex) 
                     && (result.content["application/x-www-form-urlencoded"])) {
                     op.requestBody.content["application/x-www-form-urlencoded"].schema.properties =
                         Object.assign(op.requestBody.content["application/x-www-form-urlencoded"].schema.properties, result.content["application/x-www-form-urlencoded"].schema.properties);
+                    const required = [...op.requestBody.content["application/x-www-form-urlencoded"].schema.required || [], ...result.content["application/x-www-form-urlencoded"].schema.required || []];
+                    if (required) op.requestBody.content["application/x-www-form-urlencoded"].schema.required = required;
                 }
                 else {
                     op.requestBody = Object.assign(op.requestBody, result);
